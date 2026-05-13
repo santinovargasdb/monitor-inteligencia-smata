@@ -10,12 +10,12 @@ from src.core.models import News
 from src.scrapers.base_scraper import BaseScraper
 from src.core.constants import (
     COUNTRY_SPECIFIC_DOMAINS, FIXED_RSS_SOURCES, BLACKLIST_URL_TERMS, 
-    AUTO_TERMINALS, STRICT_NEGATIVE_KEYWORDS
+    STRICT_NEGATIVE_KEYWORDS
 )
 
 class DynamicScraper(BaseScraper):
     def __init__(self):
-        # Mapeo completo con soporte geográfico para evitar bloqueos en la nube
+        # Mapeo completo institucional
         self.country_map = {
             "Argentina": {"gl": "AR", "hl": "es-419", "ceid": "AR:es-419", "geo": "Argentina"},
             "EE. UU.": {"gl": "US", "hl": "en-US", "ceid": "US:en", "geo": "USA"},
@@ -31,32 +31,24 @@ class DynamicScraper(BaseScraper):
         focus_mode = kwargs.get("focus_mode", False)
         news_list = []
         
-        # 1. RSS Fijos (Prioridad Industrial)
+        # 1. RSS Fijos (Prioridad)
         if country in FIXED_RSS_SOURCES:
             for source in FIXED_RSS_SOURCES[country]:
                 news_list.extend(self._fetch_with_requests(source["url"], source["name"], country))
 
-        # 2. Búsqueda Dinámica con Refuerzo Geo (Para Streamlit Cloud)
+        # 2. Búsqueda Dinámica con Refuerzo Geo
         news_list.extend(self._fetch_dynamic(country, query, focus_mode))
         
-        # 3. Filtrado Agresivo de Ruido (Deportes/Social)
+        # 3. Filtrado de Ruido (Deportes/Farándula)
         cleaned_list = []
         for n in news_list:
-            if self._is_blacklisted(n.url): continue
-            if self._has_negative_keywords(n.title + " " + n.content): continue
-            cleaned_list.append(n)
+            text = (n.title + " " + n.content).lower()
+            if not any(kw.lower() in text for kw in STRICT_NEGATIVE_KEYWORDS):
+                cleaned_list.append(n)
         
         return cleaned_list
 
-    def _is_blacklisted(self, url: str) -> bool:
-        return any(term in url.lower() for term in BLACKLIST_URL_TERMS)
-
-    def _has_negative_keywords(self, text: str) -> bool:
-        text_lower = text.lower()
-        return any(kw.lower() in text_lower for kw in STRICT_NEGATIVE_KEYWORDS)
-
     def _fetch_with_requests(self, url: str, name: str, country: str) -> List[News]:
-        """Usa requests con User-Agent para evitar bloqueos en servidores de nube."""
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         try:
             resp = requests.get(url, headers=headers, timeout=10)
@@ -67,18 +59,18 @@ class DynamicScraper(BaseScraper):
                     title=self._clean_text(entry.title),
                     content=self._clean_text(entry.get('summary', entry.get('description', ''))),
                     url=entry.link,
-                    date=datetime.now(), # Forzamos fecha actual para evitar errores de zona horaria
+                    date=datetime.now(),
                     source=name,
                     country=country
                 ))
             return results
-        except: return []
+        except:
+            return []
 
     def _fetch_dynamic(self, country: str, query: str, focus_mode: bool) -> List[News]:
         config = self.country_map.get(country, {"gl": "US", "hl": "en", "ceid": "US:en", "geo": ""})
         geo_tag = f" {config['geo']}" if config['geo'] else ""
         
-        # Construcción de query robusta para servidores extranjeros
         if focus_mode:
             intent = " (economy OR business OR industry OR automotive)"
             search_query = f"{query}{geo_tag}{intent}" if query else f"automotive industry{geo_tag}{intent}"
