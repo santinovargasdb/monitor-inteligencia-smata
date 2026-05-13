@@ -1,0 +1,9 @@
+
+streamlit
+feedparser
+beautifulsoup4
+textblob
+deep-translator
+langdetect
+pandas
+requests
