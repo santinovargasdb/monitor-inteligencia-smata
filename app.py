@@ -1,5 +1,10 @@
-
 import streamlit as st
+import sys
+import os
+
+# Fuerza a Python a encontrar la carpeta 'src' en el servidor de la nube
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from datetime import datetime, timedelta
 from src.scrapers.rss_scraper import DynamicScraper
 from src.processor.classifier import NewsClassifier
