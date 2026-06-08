@@ -1,4 +1,4 @@
-# Sistema Inteligente de Noticias (Argentina)
+# Sistema Inteligente de Noticias 
 
 Este sistema modular en Python permite extraer, procesar y generar informes inteligentes de noticias argentinas. Utiliza una arquitectura desacoplada para facilitar la escalabilidad.
 
