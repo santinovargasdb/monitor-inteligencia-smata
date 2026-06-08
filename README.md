@@ -52,7 +52,7 @@ streamlit run app.py
 
 El módulo `src/processor/ai_client.py` utiliza **TextBlob** para NLP y **deep-translator** para traducciones automáticas.
 - **Categorización**: Basada en relevancia semántica (SMATA).
-- **Traducción**: Las noticias internacionales (Japón, China, EE. UU.) se traducen automáticamente al español.
+- **Traducción**: Las noticias internacionales (Japón, Alemania, EE. UU.) se traducen automáticamente al español.
 - **Resumen**: Genera resúmenes ejecutivos en texto plano, libres de HTML.
 
 
